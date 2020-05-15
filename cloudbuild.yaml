@@ -25,11 +25,11 @@ steps:
       /scripts/create_attestation.sh \
         -p "$PROJECT_ID" \
         -i "$${FQ_DIGEST}" \
-        -a "$_VULNZ_ATTESTOR" \
-        -v "$_VULNZ_KMS_KEY_VERSION" \
-        -k "$_VULNZ_KMS_KEY" \
-        -l "$_KMS_LOCATION" \
-        -r "$_KMS_KEYRING"
+        -a "vulnz-attestor" \
+        -v "1" \
+        -k "vulnz-signer" \
+        -l "us-central1" \
+        -r "binauthz"
 
 - name: "gcr.io/cloud-builders/gke-deploy"
   args:
@@ -53,21 +53,21 @@ steps:
       gcloud beta container binauthz attestations sign-and-create \
         --project "$PROJECT_ID" \
         --artifact-url "$${FULLY_QUALIFIED_IMAGE}" \
-        --attestor "$_QA_ATTESTOR" \
+        --attestor "qa-attestor" \
         --attestor-project "$PROJECT_ID" \
-        --keyversion "$_QA_KMS_KEY_VERSION" \
-        --keyversion-key "$_QA_KMS_KEY" \
-        --keyversion-location "$_KMS_LOCATION" \
-        --keyversion-keyring "$_KMS_KEYRING" \
+        --keyversion "1" \
+        --keyversion-key "qa-signer" \
+        --keyversion-location "us-central1" \
+        --keyversion-keyring "binauthz" \
         --keyversion-project "$PROJECT_ID"
       EOF
       until gcloud beta container binauthz attestations list \
         --project "$PROJECT_ID" \
-        --attestor "$_QA_ATTESTOR" \
+        --attestor "qa-attestor" \
         --attestor-project "$PROJECT_ID" \
         --artifact-url "$${FULLY_QUALIFIED_IMAGE}" \
         2>&1 \
-        | grep -q "$_QA_KMS_KEY"
+        | grep -q "qa-signer"
       do
         echo "Awaiting attestation..."
         sleep 10
