@@ -26,6 +26,6 @@ spec:
     spec:
       containers:
       - name: hello-app
-        image: gcr.io/nks-ssc-lab/hello-app
+        image: gcr.io/nks-ssc-lab-run/hello-app
         ports:
         - containerPort: 8080
