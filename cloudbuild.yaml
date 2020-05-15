@@ -42,7 +42,7 @@ steps:
 - name: 'gcr.io/cloud-builders/gcloud'
   id: 'Clear staging context'
   entrypoint: '/bin/bash'
-  args: ['-c', 'rm -rf ~/.config/gcloud ~/.kube output/suggested']
+  args: ['-c', 'rm -rf ~/.config/gcloud ~/.kube output']
 
 - name: 'gcr.io/cloud-builders/gcloud'
   id: 'Await QA attestation'
