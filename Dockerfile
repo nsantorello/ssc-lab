@@ -1,4 +1,4 @@
-FROM node:10.20.1-buster
+FROM node:10.16-buster
 WORKDIR /app
 COPY . .
 ENV PORT=8080

@@ -1,0 +1,42 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/hello-app:$SHORT_SHA', '.']
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/hello-app:$SHORT_SHA'] 
+
+- name: gcr.io/$PROJECT_ID/cloudbuild-attestor
+  id: 'Check Vulnerability Scan results'
+  entrypoint: 'sh'
+  args:
+  - -xe
+  - -c
+  - |
+     /scripts/check_vulnerabilities.sh -p $PROJECT_ID -i gcr.io/$PROJECT_ID/hello-app:$SHORT_SHA -t 5
+
+- name: 'gcr.io/$PROJECT_ID/cloudbuild-attestor'
+  id: 'Attest Vulnerability Scan'
+  entrypoint: 'sh'
+  args:
+  - -xe
+  - -c
+  - |-
+      FQ_DIGEST=$(gcloud container images describe --format 'value(image_summary.fully_qualified_digest)' gcr.io/$PROJECT_ID/hello-app:$SHORT_SHA)
+      /scripts/create_attestation.sh \
+        -p "$PROJECT_ID" \
+        -i "$${FQ_DIGEST}" \
+        -a "$_VULNZ_ATTESTOR" \
+        -v "$_VULNZ_KMS_KEY_VERSION" \
+        -k "$_VULNZ_KMS_KEY" \
+        -l "$_KMS_LOCATION" \
+        -r "$_KMS_KEYRING"
+
+- name: "gcr.io/cloud-builders/gke-deploy"
+  args:
+  - run
+  - --filename=deployment.yaml
+  - --image=gcr.io/$PROJECT_ID/hello-app:$SHORT_SHA
+  - --location=us-central1-c
+  - --cluster=stage-cluster
+
+images: ['gcr.io/$PROJECT_ID/hello-app:$SHORT_SHA']
