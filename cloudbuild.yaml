@@ -40,6 +40,11 @@ steps:
   - --cluster=stage-cluster
 
 - name: 'gcr.io/cloud-builders/gcloud'
+  id: 'Clear staging context'
+  entrypoint: '/bin/bash'
+  args: ['-c', 'rm -rf ~/.config/gcloud ~/.kube']
+
+- name: 'gcr.io/cloud-builders/gcloud'
   id: 'Await QA attestation'
   entrypoint: /bin/sh
   timeout: 500s
@@ -49,7 +54,6 @@ steps:
   - |-
       FULLY_QUALIFIED_IMAGE=$(gcloud container images describe --format 'value(image_summary.fully_qualified_digest)' gcr.io/$PROJECT_ID/hello-app:$SHORT_SHA)
       cat <<EOF
-      Waiting for QA attestation... Attest the image with the following command:
       gcloud beta container binauthz attestations sign-and-create \
         --project "$PROJECT_ID" \
         --artifact-url "$${FULLY_QUALIFIED_IMAGE}" \
